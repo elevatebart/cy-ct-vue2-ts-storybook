@@ -120,8 +120,8 @@ function decorateStory(
 
       return prepare(decoratedStory, story);
     },
-    ((context: StoryContext) => prepare(storyFn(context))) as StoryFn<VueStory>
-  ) as StoryFn<VueStory>;
+    (context: StoryContext) => prepare(storyFn(context))
+  );
 }
 
 export default decorateStory;
