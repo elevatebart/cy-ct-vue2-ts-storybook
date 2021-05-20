@@ -1,8 +1,10 @@
+import Vue from "vue";
 import { combineParameters } from "@storybook/client-api";
 import { ArgTypes, Parameters, BaseDecorators } from "@storybook/addons";
 import { Story, Meta, StoryContext } from "@storybook/vue";
 import { StoryFnVueReturnType } from "@storybook/vue/dist/ts3.9/client/preview/types";
 import decorateStory from "./decorateStory";
+import { VueConstructor } from "vue/types/umd";
 
 /**
  * Object representing the preview.ts module
@@ -62,7 +64,23 @@ export function composeStory<GenericArgs>(
         "composeStory does not support legacy style stories (with passArgsFirst = false)."
       );
     }
-    return story(context.args as GenericArgs, context);
+    const component = story(context.args as GenericArgs, context);
+
+    const cmp =
+      typeof component === "string" ? { template: component } : component;
+
+    if (story.args) {
+      // @ts-ignore
+      cmp.props = Object.keys(story.args);
+    }
+
+    return Vue.extend({
+      render(h) {
+        return h(cmp, {
+          props: story.args,
+        });
+      },
+    });
   };
 
   const combinedDecorators = [
@@ -86,6 +104,7 @@ export function composeStory<GenericArgs>(
   }, {} as Record<string, { defaultValue: any }>);
 
   return ((extraArgs: Record<string, any>) =>
+    // @ts-ignore
     decorated({
       id: "",
       kind: "",
@@ -94,11 +113,11 @@ export function composeStory<GenericArgs>(
       globals: defaultGlobals,
       parameters: combineParameters(
         globalConfig.parameters || {},
-        meta.parameters || {},
+        meta?.parameters || {},
         story.parameters || {}
       ),
       args: {
-        ...meta.args,
+        ...(meta?.args || {}),
         ...story.args,
         ...extraArgs,
       },
@@ -120,3 +139,8 @@ export function composeStories<T extends { default: Meta }>(
   );
   return composedStories as StoriesWithPartialProps<T>;
 }
+
+/**
+ * Useful function for JSX syntax call of vue stories
+ */
+export const h = (cmp: () => VueConstructor) => cmp();
