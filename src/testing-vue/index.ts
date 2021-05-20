@@ -1,7 +1,8 @@
-import { defaultDecorateStory, combineParameters } from "@storybook/client-api";
+import { combineParameters } from "@storybook/client-api";
 import { ArgTypes, Parameters, BaseDecorators } from "@storybook/addons";
 import { Story, Meta, StoryContext } from "@storybook/vue";
 import { StoryFnVueReturnType } from "@storybook/vue/dist/ts3.9/client/preview/types";
+import decorateStory from "./decorateStory";
 
 /**
  * Object representing the preview.ts module
@@ -70,7 +71,7 @@ export function composeStory<GenericArgs>(
     ...(globalConfig?.decorators || []),
   ];
 
-  const decorated = defaultDecorateStory(
+  const decorated = decorateStory(
     finalStoryFn as any,
     combinedDecorators as any
   );
