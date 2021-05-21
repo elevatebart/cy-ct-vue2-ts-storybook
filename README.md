@@ -26,6 +26,10 @@ yarn cy
 
 Gives you this
 
+<p align="center">
+  <img style='width: 70%' alt="Cypress Real World App" src="./assets/demobutton.png" />
+</p>
+
 ### Customize configuration
 
 See [Configuration Reference](https://cli.vuejs.org/config/).
