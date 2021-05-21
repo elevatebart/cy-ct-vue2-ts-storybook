@@ -1,15 +1,18 @@
-import { mount } from "@cypress/vue";
-import { composeStories, h } from "../testing-vue";
-import * as stories from "./Button.stories";
+import { mount } from '@cypress/vue'
+import { composeStories } from '../testing-vue'
 
-const { Primary, Secondary } = composeStories(stories);
+import * as stories from './Button.stories.js'
 
-describe("<Button />", () => {
-  it("Primary", () => {
-    mount(<Primary />);
-  });
+const { Primary, Secondary } = composeStories(stories)
 
-  it("Secondary", () => {
-    mount(<Secondary />);
-  });
-});
+describe('<Button />', () => {
+  it('Primary', () => {
+    mount(<Primary />)
+    cy.get('button').should('exist')
+  })
+
+  it('Secondary', () => {
+    mount(<Secondary label="overriden label" />)
+    cy.get('button').should('exist')
+  })
+})

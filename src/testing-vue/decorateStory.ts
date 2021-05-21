@@ -1,63 +1,62 @@
-import Vue, { ComponentOptions, VueConstructor } from "vue";
-import { StoryFn, DecoratorFunction, StoryContext } from "@storybook/addons";
+import Vue, { ComponentOptions, VueConstructor } from 'vue'
+import { StoryFn, DecoratorFunction, StoryContext } from '@storybook/addons'
 
-import { StoryFnVueReturnType } from "@storybook/vue/dist/ts3.9/client/preview/types";
+export const WRAPS = 'STORYBOOK_WRAPS'
+export const VALUES = 'STORYBOOK_VALUES'
 
-export const WRAPS = "STORYBOOK_WRAPS";
-export const VALUES = "STORYBOOK_VALUES";
-
-export type VueStory = VueConstructor & { options: Record<string, any> };
+export type VueStory = VueConstructor & { options: Record<string, any> }
+type StoryFnVueReturnType = string | ComponentOptions<any>
 
 function getType(fn: Function) {
-  const match = fn && fn.toString().match(/^\s*function (\w+)/);
-  return match ? match[1] : "";
+  const match = fn && fn.toString().match(/^\s*function (\w+)/)
+  return match ? match[1] : ''
 }
 
 // https://github.com/vuejs/vue/blob/dev/src/core/util/props.js#L92
 function resolveDefault({ type, default: def }: any) {
-  if (typeof def === "function" && getType(type) !== "Function") {
+  if (typeof def === 'function' && getType(type) !== 'Function') {
     // known limitation: we don't have the component instance to pass
-    return def.call();
+    return def.call()
   }
 
-  return def;
+  return def
 }
 
 export function extractProps(component: VueConstructor) {
   // @ts-ignore this options business seems not good according to the types
   return Object.entries(component.options.props || {})
     .map(([name, prop]) => ({ [name]: resolveDefault(prop) }))
-    .reduce((wrap, prop) => ({ ...wrap, ...prop }), {});
+    .reduce((wrap, prop) => ({ ...wrap, ...prop }), {})
 }
 
 function prepare(
   rawStory: StoryFnVueReturnType,
   innerStory?: VueStory
 ): VueConstructor | null {
-  let story: ComponentOptions<Vue> | VueConstructor;
+  let story: ComponentOptions<Vue> | VueConstructor
 
-  if (typeof rawStory === "string") {
-    story = { template: rawStory };
+  if (typeof rawStory === 'string') {
+    story = { template: rawStory }
   } else if (rawStory != null) {
-    story = rawStory as ComponentOptions<Vue>;
+    story = rawStory as ComponentOptions<Vue>
   } else {
-    return null;
+    return null
   }
 
-  let storyVue: VueConstructor;
+  let storyVue: VueConstructor
   // @ts-ignore
   // eslint-disable-next-line no-underscore-dangle
   if (!story._isVue) {
     if (innerStory) {
-      story.components = { ...(story.components || {}), story: innerStory };
+      story.components = { ...(story.components || {}), story: innerStory }
     }
-    storyVue = Vue.extend(story);
+    storyVue = Vue.extend(story)
     // @ts-ignore // https://github.com/storybookjs/storybook/pull/7578#discussion_r307984824
   } else if (story.options[WRAPS]) {
-    storyVue = story as VueConstructor;
-    return storyVue;
+    storyVue = story as VueConstructor
+    return storyVue
   } else {
-    storyVue = story as VueConstructor;
+    storyVue = story as VueConstructor
   }
 
   return Vue.extend({
@@ -78,20 +77,20 @@ function prepare(
           props: { ...(data.props || {}), ...parent.$root[VALUES] },
         },
         children
-      );
+      )
     },
-  });
+  })
 }
 
 const defaultContext: StoryContext = {
-  id: "unspecified",
-  name: "unspecified",
-  kind: "unspecified",
+  id: 'unspecified',
+  name: 'unspecified',
+  kind: 'unspecified',
   parameters: {},
   args: {},
   argTypes: {},
   globals: {},
-};
+}
 
 function decorateStory(
   storyFn: StoryFn<StoryFnVueReturnType>,
@@ -102,26 +101,26 @@ function decorateStory(
     (decorated: StoryFn<VueStory>, decorator) => (
       context: StoryContext = defaultContext
     ) => {
-      let story;
+      let story
 
       const decoratedStory = decorator(
         ({ parameters, ...innerContext } = {} as StoryContext) =>
           decorated({ ...context, ...innerContext }),
         context
-      );
+      )
 
       if (!story) {
-        story = decorated(context);
+        story = decorated(context)
       }
 
       if (decoratedStory === story) {
-        return story;
+        return story
       }
 
-      return prepare(decoratedStory, story);
+      return prepare(decoratedStory, story)
     },
     (context: StoryContext) => prepare(storyFn(context))
-  );
+  )
 }
 
-export default decorateStory;
+export default decorateStory
